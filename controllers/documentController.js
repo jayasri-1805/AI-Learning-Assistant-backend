@@ -30,7 +30,7 @@ export const uploadDocument = async (req, res, next) => {
     const document = await Document.create({
       userId: req.user._id,
       title,
-      fileName: req.file.originalname,
+      filename: req.file.originalname,
       filePath: fileUrl,
       fileSize: req.file.size,
       status: "processing",
@@ -74,7 +74,7 @@ export const getDocuments = async (req, res, next) => {
   try {
     const documents = await Document.aggregate([
       {
-        $match: { userId: mongoose.Types.ObjectId(req.user._id) },
+        $match: { userId: new mongoose.Types.ObjectId(req.user._id) },
       },
       {
         $lookup: {
@@ -94,7 +94,7 @@ export const getDocuments = async (req, res, next) => {
       },
       {
         $addFields: {
-          flashcardCount: { $size: "$flashcardsSets" },
+          flashcardCount: { $size: "$flashcards" },
           quizCount: { $size: "$quizzes" },
         },
       },
