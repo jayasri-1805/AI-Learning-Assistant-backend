@@ -58,7 +58,7 @@ export const reviewFlashcard = async (req, res, next) => {
       });
     }
     flashcardSet.cards[cardIndex].LastReviewed = new Date();
-    flashcardSet.cards[cardIndex].reviewedCount += 1;
+    flashcardSet.cards[cardIndex].ReviewCount += 1;
 
     await flashcardSet.save();
 
@@ -113,7 +113,7 @@ export const toggleStarFlashcard = async (req, res, next) => {
 export const deleteFlashcardSet = async (req, res, next) => {
   try {
     const flashcardSet = await Flashcard.findOne({
-      _id: req.params.set_id,
+      _id: req.params.id,
       userId: req.user._id,
     });
 
@@ -125,7 +125,7 @@ export const deleteFlashcardSet = async (req, res, next) => {
       });
     }
 
-    await Flashcard.deleteOne();
+    await flashcardSet.deleteOne();
 
     res.status(200).json({
       success: true,

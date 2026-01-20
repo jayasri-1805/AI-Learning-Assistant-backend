@@ -37,8 +37,10 @@ ${text.substring(0, 15000)} `;
     });
 
     const generatedText = response.text;
+    // console.log("Flashards ", generatedText);
     const flashcards = [];
-    const cards = generatedText.split(" --- ").filter((c) => c.trim());
+    // Use regex to split cards, handling newlines and spaces around the separator
+    const cards = generatedText.split(/\n\s*---\s*\n/).filter((c) => c.trim());
 
     for (const card of cards) {
       const lines = card.trim().split("\n");
