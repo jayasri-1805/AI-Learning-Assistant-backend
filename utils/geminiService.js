@@ -78,7 +78,7 @@ ${text.substring(0, 15000)} `;
  * @returns { Promise < Array < { question: string, options: Array, correctAnswer: string, explanation: string, difficulty: string } >>}
  */
 
-export const generateQuiz = async (text, numQuestions = 5) => {
+export const generateQuiz = async (text, numQuestions) => {
   const prompt = `Generate a quiz with exactly ${numQuestions} multiple-choice questions from the following text.
   Return the response ONLY as a raw JSON array of objects. Do not wrap it in markdown code blocks or any other text.
   

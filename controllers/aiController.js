@@ -94,9 +94,10 @@ export const generateQuiz = async (req, res, next) => {
         statusCode: 400,
       });
     }
+    const numQuestions = parseInt(numberOfQuestions) || 5;
     const questions = await geminiService.generateQuiz(
       document.extractedText,
-      parseInt(numberOfQuestions),
+      numQuestions,
     );
 
     console.log("Questions extracted from Gemini", questions);
