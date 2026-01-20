@@ -78,20 +78,19 @@ ${text.substring(0, 15000)} `;
 
 export const generateQuiz = async (text, numQuestions = 5) => {
   const prompt = `Generate a quiz with exactly ${numQuestions} multiple-choice questions from the following text.
-Format each question as:
-Q: [Question]
-O1: [Option 1]
-O2: [Option 2]
-O3: [Option 3]
-O4: [Option 4]
-C: [Correct option - exactly as written above]
-E: [Brief explanation ]
-D: [Difficulty level: easy, medium, or hard]
+  Return the response ONLY as a raw JSON array of objects. Do not wrap it in markdown code blocks or any other text.
+  
+  Each object in the array must follow this structure:
+  {
+    "question": "The question text",
+    "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+    "correctAnswer": "The correct option text (must match exactly one of the options)",
+    "explanation": "Brief explanation of why the answer is correct",
+    "difficulty": "easy", "medium", or "hard"
+  }
 
-Separate each question with " --- "
-
-Text:
-${text.substring(0, 15000)} `;
+  Text:
+  ${text.substring(0, 15000)}`;
 
   try {
     const response = await ai.models.generateContent({
@@ -99,50 +98,51 @@ ${text.substring(0, 15000)} `;
       contents: prompt,
     });
 
-    const questions = [];
-    const questionBlocks = generatedText.split(" --- ").filter((q) => q.trim());
+    const generatedText = response.text.trim();
 
-    for (const block of questionBlocks) {
-      const lines = block.trim().split("\n");
-      let question = "",
-        options = [],
-        correctAnswer = "",
-        explanation = "",
-        difficulty = "medium";
+    // Clean up potential markdown code blocks if the model ignores the "ONLY raw JSON" instruction
+    const jsonString = generatedText
+      .replace(/^```json\n?/, "")
+      .replace(/\n?```$/, "")
+      .trim();
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("Q:")) {
-          question = trimmed.substring(2).trim();
-        } else if (trimmed.match(/^O\d:/)) {
-          options.push(trimmed.substring(3).trim());
-        } else if (trimmed.startsWith("C:")) {
-          correctAnswer = trimmed.substring(2).trim();
-        } else if (trimmed.startsWith("E:")) {
-          explanation = trimmed.substring(2).trim();
-        } else if (trimmed.startsWith("D:")) {
-          const diff = trimmed.substring(2).trim().toLowerCase();
-          if (["easy", "medium", "hard"].includes(diff)) {
-            difficulty = diff;
-          }
-        }
-      }
-
-      if (question && options.length === 4 && correctAnswer) {
-        questions.push({
-          question,
-          options,
-          correctAnswer,
-          explanation,
-          difficulty,
-        });
-      }
+    let questions;
+    try {
+      questions = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error(
+        "JSON Parse Error:",
+        parseError,
+        "Generated Text:",
+        generatedText,
+      );
+      throw new Error("Failed to parse quiz data from AI response");
     }
 
-    return questions.slice(0, numQuestions);
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error("AI generated an empty or invalid quiz structure");
+    }
+
+    // Validate structure of each question
+    const validQuestions = questions.filter(
+      (q) =>
+        q.question &&
+        Array.isArray(q.options) &&
+        q.options.length === 4 &&
+        q.correctAnswer &&
+        q.options.includes(q.correctAnswer),
+    );
+
+    if (validQuestions.length === 0) {
+      throw new Error(
+        "No valid questions could be parsed from the AI response",
+      );
+    }
+
+    return validQuestions;
   } catch (error) {
-    console.error("Gemini API error:", error);
-    throw new Error("Failed to generate quiz");
+    console.error("Error generating quiz:", error);
+    throw error;
   }
 };
 
@@ -184,7 +184,7 @@ export const chatWithContext = async (question, chunks) => {
     .map((c, i) => `[Chunk ${i + 1}]\n${c.content}`)
     .join("\n\n");
 
-  console.log("Context________", context);
+  //   console.log("Context________", context);
 
   const prompt = `Based on the following document context, analyze the context and answer the user's question.
     If the answer is not in the context, say so.

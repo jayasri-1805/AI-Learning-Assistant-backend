@@ -65,7 +65,7 @@ export const generateFlashcards = async (req, res, next) => {
 
 export const generateQuiz = async (req, res, next) => {
   try {
-    const { documentId, numberOfQuestions = 5, title } = req.body;
+    const { documentId, numberOfQuestions, title } = req.body;
     if (!documentId) {
       return res.status(400).json({
         success: false,
@@ -96,8 +96,21 @@ export const generateQuiz = async (req, res, next) => {
     }
     const questions = await geminiService.generateQuiz(
       document.extractedText,
-      parseInt(numQuestions),
+      parseInt(numberOfQuestions),
     );
+
+    console.log("Questions extracted from Gemini", questions);
+
+    if (!questions || questions.length === 0) {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to generate valid quiz questions from the document.",
+        statusCode: 500,
+      });
+    }
+
+    console.log("Questions to be saved:", JSON.stringify(questions, null, 2));
+
     const quiz = await Quiz.create({
       userId: req.user._id,
       documentId: document._id,
