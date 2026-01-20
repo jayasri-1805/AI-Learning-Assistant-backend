@@ -72,9 +72,14 @@ const processPDF = async (documentID, filePath) => {
 
 export const getDocuments = async (req, res, next) => {
   try {
+    const matchStage = { userId: new mongoose.Types.ObjectId(req.user._id) };
+    if (req.query.search) {
+      matchStage.title = { $regex: req.query.search, $options: "i" };
+    }
+
     const documents = await Document.aggregate([
       {
-        $match: { userId: new mongoose.Types.ObjectId(req.user._id) },
+        $match: matchStage,
       },
       {
         $lookup: {
