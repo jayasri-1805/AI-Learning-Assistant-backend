@@ -105,7 +105,7 @@ export const getQuizResults = async (req, res, next) => {
     const quiz = await Quiz.findOne({
       _id: req.params.id,
       userId: req.user._id,
-    });
+    }).populate("documentId", "title");
 
     if (!quiz) {
       return res.status(404).json({
@@ -123,14 +123,37 @@ export const getQuizResults = async (req, res, next) => {
       });
     }
 
+    // Merge questions with user answers
+    const detailedResults = quiz.questions.map((question, index) => {
+      const userAnswer = quiz.userAnswers.find(
+        (a) => a.questionIndex === index,
+      );
+      return {
+        question: question.question,
+        options: question.options,
+        correctAnswer: question.correctAnswer,
+        explanation: question.explanation,
+        selectedAnswer: userAnswer ? userAnswer.selectedAnswer : null,
+        isCorrect: userAnswer ? userAnswer.isCorrect : false,
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
-        score: quiz.score,
-        totalQuestions: quiz.totalQuestions,
-        userAnswers: quiz.userAnswers,
-        questions: quiz.questions,
-        completedAt: quiz.completedAt,
+        quiz: {
+          title: quiz.title,
+          score: quiz.score,
+          document: quiz.documentId, // Frontend expects 'document' but maps 'documentId' (populated) to it if we want, OR we can rename here.
+          // Wait, frontend says: quiz.document._id
+          // Mongoose populate replaces the field `documentId` with the object.
+          // So it exists as `quiz.documentId`.
+          // I will construct the object explicitly to match frontend expectation of `document`.
+          document: quiz.documentId,
+          totalQuestions: quiz.totalQuestions,
+          completedAt: quiz.completedAt,
+        },
+        results: detailedResults,
       },
     });
   } catch (error) {
