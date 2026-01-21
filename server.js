@@ -18,13 +18,15 @@ import progressRoutes from "./routes/progressRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import cookieParser from "cookie-parser";
+
 const app = express();
 
 connectDB();
 
 app.use(
   cors({
-    origin: "*",
+    origin: ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -33,6 +35,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(
   "/uploads",

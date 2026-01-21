@@ -1,48 +1,48 @@
-import express from 'express';
-import { body } from 'express-validator';
+import express from "express";
+import { body } from "express-validator";
 import {
-    register,
-    login,
-    getProfile,
-    updateProfile,
-    changePassword 
-} from '../controllers/authController.js';
-import protect from '../middleware/auth.js';
+  register,
+  login,
+  logout,
+  getProfile,
+  updateProfile,
+  changePassword,
+} from "../controllers/authController.js";
+import protect from "../middleware/auth.js";
 
 const router = express.Router();
 
 //Validation middleware
 const registerValidation = [
-    body('username')
+  body("username")
     .trim()
     .isLength({ min: 3 })
-    .withMessage('Username must be at least 3 characters '),
-    body('email')
+    .withMessage("Username must be at least 3 characters "),
+  body("email")
     .isEmail()
     .isLength({ min: 6 })
-    .withMessage('Please provide a valid email '),
-    body('password')
+    .withMessage("Please provide a valid email "),
+  body("password")
     .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters ')
+    .withMessage("Password must be at least 6 characters "),
 ];
 
 const loginValidation = [
-    body('email')
+  body("email")
     .isEmail()
     .normalizeEmail()
-    .withMessage('Please provide a valid email '),
-    body('password')
-    .notEmpty()
-    .withMessage('Password is required ')
+    .withMessage("Please provide a valid email "),
+  body("password").notEmpty().withMessage("Password is required "),
 ];
 
 //public routes
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
+router.post("/register", registerValidation, register);
+router.post("/login", loginValidation, login);
+router.post("/logout", logout);
 
 //protected routes
-router.get('/profile', protect, getProfile);
-router.put('/profile', protect, updateProfile);
-router.put('/change-password', protect, changePassword);
+router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
+router.put("/change-password", protect, changePassword);
 
 export default router;
